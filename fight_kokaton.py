@@ -4,7 +4,6 @@ import sys
 import time
 import pygame as pg
 
-
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -48,29 +47,15 @@ class Bird:
     }
 
     def __init__(self, xy: tuple[int, int]):
-        """
-        こうかとん画像Surfaceを生成する
-        引数 xy：こうかとん画像の初期位置座標タプル
-        """
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
 
     def change_img(self, num: int, screen: pg.Surface):
-        """
-        こうかとん画像を切り替え，画面に転送する
-        引数1 num：こうかとん画像ファイル名の番号
-        引数2 screen：画面Surface
-        """
         self.img = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.img, self.rct)
 
     def update(self, key_lst: list[bool], screen: pg.Surface):
-        """
-        押下キーに応じてこうかとんを移動させる
-        引数1 key_lst：押下キーの真理値リスト
-        引数2 screen：画面Surface
-        """
         sum_mv = [0, 0]
         for k, mv in __class__.delta.items():
             if key_lst[k]:
@@ -84,41 +69,25 @@ class Bird:
         screen.blit(self.img, self.rct)
 
 
-# ビームクラス:
-    # """
-    # こうかとんが放つビームに関するクラス
-    # """
-    # def イニシャライザ(self, bird:"Bird"):
-    #     """
-    #     ビーム画像Surfaceを生成する
-    #     引数 bird：ビームを放つこうかとん（Birdインスタンス）
-    #     """
-    #     self.img = pg.画像のロード(f"fig/beam.png")
-    #     self.rct = self.img.Rectの取得()
-    #     self.ビームの中心縦座標 = こうかとんの中心縦座標
-    #     self.ビームの左座標 = こうかとんの右座標
-    #     self.vx, self.vy = +5, 0
+class Beam:
+    """
+    こうかとんが放つビームに関するクラス
+    """
+    def __init__(self, bird: Bird):
+        self.img = pg.image.load("fig/beam.png")  # ビーム画像のロード
+        self.rct = self.img.get_rect()            # Rectの取得
+        self.rct.centery = bird.rct.centery       # こうかとんの高さに合わせる
+        self.rct.left = bird.rct.right            # こうかとんの右端に配置
+        self.vx = +5                              # 横方向の速度
 
-    # def update(self, screen: pg.Surface):
-    #     """
-    #     ビームを速度ベクトルself.vx, self.vyに基づき移動させる
-    #     引数 screen：画面Surface
-    #     """
-    #     if check_bound(self.rct) == (True, True):
-    #         self.rct.move_ip(self.vx, self.vy)
-    #         screen.blit(self.img, self.rct)    
+    def update(self, screen: pg.Surface):
+        self.rct.move_ip(self.vx, 0)
+        if check_bound(self.rct) == (True, True):
+            screen.blit(self.img, self.rct)       # 画面内なら描画する
 
 
 class Bomb:
-    """
-    爆弾に関するクラス
-    """
     def __init__(self, color: tuple[int, int, int], rad: int):
-        """
-        引数に基づき爆弾円Surfaceを生成する
-        引数1 color：爆弾円の色タプル
-        引数2 rad：爆弾円の半径
-        """
         self.img = pg.Surface((2*rad, 2*rad))
         pg.draw.circle(self.img, color, (rad, rad), rad)
         self.img.set_colorkey((0, 0, 0))
@@ -127,10 +96,6 @@ class Bomb:
         self.vx, self.vy = +5, +5
 
     def update(self, screen: pg.Surface):
-        """
-        爆弾を速度ベクトルself.vx, self.vyに基づき移動させる
-        引数 screen：画面Surface
-        """
         yoko, tate = check_bound(self.rct)
         if not yoko:
             self.vx *= -1
@@ -142,23 +107,23 @@ class Bomb:
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
-    screen = pg.display.set_mode((WIDTH, HEIGHT))    
+    screen = pg.display.set_mode((WIDTH, HEIGHT))
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     bomb = Bomb((255, 0, 0), 10)
+    beams = []  # 発射されたビームを管理するリスト
     clock = pg.time.Clock()
-    tmr = 0
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
                 return
-            # if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
-            #     # スペースキー押下でBeamクラスのインスタンス生成
-            #     beam = Beam(bird)            
+            if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
+                beams.append(Beam(bird))  # ビームを発射
+
         screen.blit(bg_img, [0, 0])
-        
+
         if bird.rct.colliderect(bomb.rct):
-            # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
             bird.change_img(8, screen)
             pg.display.update()
             time.sleep(1)
@@ -166,10 +131,13 @@ def main():
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        # beam.update(screen)   
+
+        # 各ビームを更新し、画面に描画
+        for beam in beams:
+            beam.update(screen)
+
         bomb.update(screen)
         pg.display.update()
-        tmr += 1
         clock.tick(50)
 
 
