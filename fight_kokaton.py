@@ -53,6 +53,7 @@ class Bird:
         self.rct.center = xy
 
     def change_img(self, num: int, screen: pg.Surface):
+        """指定された番号の画像に変更して表示する"""
         self.img = pg.transform.rotozoom(pg.image.load(f"fig/{num}.png"), 0, 0.9)
         screen.blit(self.img, self.rct)
 
@@ -71,9 +72,7 @@ class Bird:
 
 
 class Beam:
-    """
-    こうかとんが放つビームに関するクラス
-    """
+    """こうかとんが放つビームに関するクラス"""
     def __init__(self, bird: Bird):
         self.img = pg.image.load("fig/beam.png")
         self.rct = self.img.get_rect()
@@ -88,9 +87,7 @@ class Beam:
 
 
 class Bomb:
-    """
-    爆弾に関するクラス
-    """
+    """爆弾に関するクラス"""
     def __init__(self, color: tuple[int, int, int], rad: int):
         self.img = pg.Surface((2 * rad, 2 * rad))
         pg.draw.circle(self.img, color, (rad, rad), rad)
@@ -115,7 +112,7 @@ def main():
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
     bomb = Bomb((255, 0, 0), 10)
-    beam = None  # 初期化
+    beam = None
     clock = pg.time.Clock()
     while True:
         for event in pg.event.get():
@@ -133,8 +130,12 @@ def main():
             return
 
         if beam and bomb and beam.rct.colliderect(bomb.rct):
-            beam = None  # ビーム消滅
-            bomb = None  # 爆弾消滅
+            beam = None
+            bomb = None
+            bird.change_img(6, screen)  # 喜ぶエフェクト
+            pg.display.update()
+            time.sleep(0.5)  # 喜ぶ画像を表示
+            bird.change_img(3, screen)  # 元に戻す
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
