@@ -160,7 +160,8 @@ def main():
     bird = Bird((300, 200))
     bomb = Bomb((255, 0, 0), 10)
     beam = None
-    beams = []  
+    beams = []
+    explosions=[]  
     score = Score()
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)] 
     clock = pg.time.Clock()
@@ -182,8 +183,8 @@ def main():
                 pg.display.update()
                 time.sleep(1)
                 return
-        for beam in beams[:]:
-            for i, bomb in enumerate(bombs[:]):
+        for beam in beams:
+            for i, bomb in enumerate(bombs):
                 if beam.rct.colliderect(bomb.rct):  # ビームが爆弾を撃ち落としたら
                     beams.remove(beam)
                     bombs.pop(i)
